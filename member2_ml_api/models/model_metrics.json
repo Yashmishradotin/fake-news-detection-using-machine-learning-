@@ -1,0 +1,40 @@
+{
+    "best_model": "lr",
+    "best_model_name": "Logistic Regression",
+    "total_samples": 600,
+    "features_count": 675,
+    "models": {
+        "lr": {
+            "name": "Logistic Regression",
+            "accuracy": 100.0,
+            "precision": 100.0,
+            "recall": 100.0,
+            "f1_score": 100.0,
+            "filename": "lr_model.pkl"
+        },
+        "svm": {
+            "name": "Support Vector Machine",
+            "accuracy": 100.0,
+            "precision": 100.0,
+            "recall": 100.0,
+            "f1_score": 100.0,
+            "filename": "svm_model.pkl"
+        },
+        "rf": {
+            "name": "Random Forest",
+            "accuracy": 100.0,
+            "precision": 100.0,
+            "recall": 100.0,
+            "f1_score": 100.0,
+            "filename": "rf_model.pkl"
+        },
+        "xgb": {
+            "name": "XGBoost",
+            "accuracy": 100.0,
+            "precision": 100.0,
+            "recall": 100.0,
+            "f1_score": 100.0,
+            "filename": "xgb_model.pkl"
+        }
+    }
+}

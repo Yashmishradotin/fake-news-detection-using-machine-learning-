@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VeriFacts - Multi-Model AI Fake News Detector</title>
+    <meta name="description" content="AI-powered fake news detection tool using NLP (NLTK), Pandas, TF-IDF and 4 ML Models: Logistic Regression, SVM, Random Forest, and XGBoost.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg-primary: #0a0e1a;
+            --bg-secondary: #111827;
+            --bg-card: rgba(255,255,255,0.04);
+            --border: rgba(255,255,255,0.08);
+            --purple: #8b5cf6;
+            --cyan: #06b6d4;
+            --green: #10b981;
+            --red: #ef4444;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Animated background blobs */
+        body::before {
+            content: '';
+            position: fixed;
+            width: 600px; height: 600px;
+            background: radial-gradient(circle, rgba(139,92,246,0.15) 0%, transparent 70%);
+            top: -200px; left: -200px;
+            border-radius: 50%;
+            pointer-events: none;
+            animation: blobMove1 10s ease-in-out infinite alternate;
+        }
+        body::after {
+            content: '';
+            position: fixed;
+            width: 500px; height: 500px;
+            background: radial-gradient(circle, rgba(6,182,212,0.12) 0%, transparent 70%);
+            bottom: -150px; right: -100px;
+            border-radius: 50%;
+            pointer-events: none;
+            animation: blobMove2 12s ease-in-out infinite alternate;
+        }
+        @keyframes blobMove1 { from { transform: translate(0,0); } to { transform: translate(80px, 60px); } }
+        @keyframes blobMove2 { from { transform: translate(0,0); } to { transform: translate(-60px, -80px); } }
+
+        /* Header */
+        header {
+            padding: 20px 40px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--border);
+            backdrop-filter: blur(12px);
+            position: sticky; top: 0; z-index: 100;
+        }
+        .logo { display: flex; align-items: center; gap: 12px; }
+        .logo-icon {
+            width: 42px; height: 42px;
+            background: linear-gradient(135deg, var(--purple), var(--cyan));
+            border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 20px;
+        }
+        .logo-text { font-size: 20px; font-weight: 800; letter-spacing: -0.02em; }
+        .logo-sub { font-size: 11px; color: var(--text-secondary); }
+        .header-badges { display: flex; gap: 8px; align-items: center; }
+        .header-badge {
+            background: rgba(139,92,246,0.12);
+            border: 1px solid rgba(139,92,246,0.3);
+            color: #c4b5fd;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .tech-pill {
+            background: rgba(6,182,212,0.1);
+            border: 1px solid rgba(6,182,212,0.25);
+            color: #67e8f9;
+            padding: 4px 10px;
+            border-radius: 16px;
+            font-size: 11px;
+            font-weight: 500;
+        }
+
+        /* Main Container */
+        main {
+            max-width: 860px;
+            margin: 0 auto;
+            padding: 48px 24px 80px;
+        }
+
+        .hero-tag {
+            display: inline-flex; align-items: center; gap: 6px;
+            background: rgba(6,182,212,0.1);
+            border: 1px solid rgba(6,182,212,0.3);
+            color: var(--cyan);
+            padding: 6px 16px; border-radius: 20px;
+            font-size: 12px; font-weight: 600;
+            margin-bottom: 20px;
+        }
+        h1 {
+            font-size: clamp(32px, 5vw, 48px);
+            font-weight: 800;
+            line-height: 1.15;
+            letter-spacing: -0.03em;
+            margin-bottom: 16px;
+            background: linear-gradient(135deg, #ffffff 40%, var(--text-secondary));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .hero-desc {
+            font-size: 16px;
+            color: var(--text-secondary);
+            line-height: 1.6;
+            margin-bottom: 32px;
+        }
+
+        /* Input Card */
+        .input-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 24px;
+            backdrop-filter: blur(8px);
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .input-card:focus-within {
+            border-color: rgba(139,92,246,0.4);
+            box-shadow: 0 0 30px rgba(139,92,246,0.1);
+        }
+
+        /* Model Selector Row */
+        .model-select-wrapper {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 16px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+        }
+        .model-select-label {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            display: flex; align-items: center; gap: 6px;
+        }
+        .model-dropdown {
+            background: #151d30;
+            border: 1px solid rgba(139,92,246,0.3);
+            color: var(--text-primary);
+            padding: 8px 14px;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 500;
+            outline: none;
+            cursor: pointer;
+            transition: border-color 0.2s;
+        }
+        .model-dropdown:focus {
+            border-color: var(--cyan);
+        }
+
+        .input-label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-bottom: 12px;
+        }
+        textarea {
+            width: 100%;
+            height: 150px;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 16px;
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 15px;
+            line-height: 1.6;
+            resize: vertical;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        textarea:focus {
+            border-color: var(--purple);
+            box-shadow: 0 0 0 3px rgba(139,92,246,0.15);
+        }
+        textarea::placeholder { color: rgba(148,163,184,0.5); }
+
+        .input-footer {
+            display: flex; align-items: center;
+            justify-content: space-between; margin-top: 16px; gap: 12px;
+        }
+        #charCount { font-size: 13px; color: var(--text-secondary); }
+
+        .btn-detect {
+            background: linear-gradient(135deg, var(--purple), var(--cyan));
+            border: none; color: white;
+            padding: 14px 32px; border-radius: 12px;
+            font-size: 15px; font-weight: 600;
+            cursor: pointer; white-space: nowrap;
+            transition: transform 0.2s, box-shadow 0.2s, opacity 0.2s;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .btn-detect:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(139,92,246,0.4); }
+        .btn-detect:active { transform: translateY(0); }
+        .btn-detect:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+        /* Loader */
+        .loader {
+            display: none;
+            width: 18px; height: 18px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Result Card */
+        #resultCard {
+            display: none;
+            margin-top: 24px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 28px;
+            animation: slideUp 0.4s ease;
+        }
+
+        .result-header {
+            display: flex; align-items: center;
+            justify-content: space-between; margin-bottom: 20px;
+        }
+        .result-title { font-size: 12px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.1em; }
+        .result-model-badge {
+            background: rgba(139,92,246,0.18);
+            border: 1px solid rgba(139,92,246,0.3);
+            color: #d8b4fe;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .result-verdict {
+            font-size: 40px; font-weight: 800;
+            letter-spacing: -0.02em;
+            display: flex; align-items: center; gap: 12px;
+            margin-bottom: 20px;
+        }
+        .verdict-icon { font-size: 36px; }
+
+        /* Confidence bar */
+        .confidence-section { margin-top: 16px; }
+        .conf-row {
+            display: flex; justify-content: space-between;
+            font-size: 13px; color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+        .conf-value { font-weight: 600; color: var(--text-primary); }
+        .bar-track {
+            width: 100%; height: 8px;
+            background: rgba(255,255,255,0.06);
+            border-radius: 8px; overflow: hidden;
+        }
+        .bar-fill {
+            height: 100%; border-radius: 8px;
+            transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+            width: 0%;
+        }
+
+        .result-desc {
+            margin-top: 20px;
+            padding: 14px 18px;
+            background: rgba(255,255,255,0.03);
+            border-radius: 10px;
+            font-size: 14px;
+            color: var(--text-secondary);
+            line-height: 1.6;
+            border-left: 3px solid;
+        }
+
+        /* Error Card */
+        #errorCard {
+            display: none;
+            margin-top: 24px;
+            background: rgba(239,68,68,0.08);
+            border: 1px solid rgba(239,68,68,0.3);
+            border-radius: 16px;
+            padding: 20px 24px;
+            color: #fca5a5;
+            font-size: 14px;
+            animation: slideUp 0.4s ease;
+        }
+        #errorCard strong { display: block; margin-bottom: 4px; }
+
+        /* Model Comparison Table Section */
+        .comparison-card {
+            margin-top: 36px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 24px;
+            backdrop-filter: blur(8px);
+        }
+        .comparison-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 18px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .comparison-title {
+            font-size: 16px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .comparison-badge {
+            background: rgba(16,185,129,0.15);
+            border: 1px solid rgba(16,185,129,0.3);
+            color: #34d399;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .table-responsive {
+            width: 100%;
+            overflow-x: auto;
+        }
+        .metrics-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+            text-align: left;
+        }
+        .metrics-table th {
+            padding: 10px 14px;
+            color: var(--text-secondary);
+            font-weight: 600;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            border-bottom: 1px solid var(--border);
+        }
+        .metrics-table td {
+            padding: 12px 14px;
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+            color: var(--text-primary);
+        }
+        .metrics-table tr:hover {
+            background: rgba(255,255,255,0.02);
+        }
+        .metric-badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 13px;
+            background: rgba(6,182,212,0.12);
+            color: #67e8f9;
+        }
+
+        /* Stats Row */
+        .stats-row {
+            display: flex; gap: 16px; margin-top: 36px;
+            animation: fadeIn 0.8s ease;
+        }
+        .stat-card {
+            flex: 1;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 20px;
+            text-align: center;
+        }
+        .stat-num { font-size: 28px; font-weight: 800; background: linear-gradient(135deg, var(--purple), var(--cyan)); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+        .stat-label { font-size: 12px; color: var(--text-secondary); margin-top: 4px; }
+
+        /* History */
+        #historySection {
+            margin-top: 32px;
+            display: none;
+            animation: slideUp 0.4s ease;
+        }
+        .section-title {
+            font-size: 14px; font-weight: 600; color: var(--text-secondary);
+            text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 14px;
+        }
+        .history-item {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 14px 18px;
+            margin-bottom: 10px;
+            display: flex; align-items: center; justify-content: space-between;
+            cursor: pointer; transition: border-color 0.2s;
+        }
+        .history-item:hover { border-color: rgba(139,92,246,0.4); }
+        .history-text { font-size: 14px; color: var(--text-secondary); max-width: 70%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .history-badges-grp { display: flex; align-items: center; gap: 8px; }
+        .history-badge { padding: 4px 10px; border-radius: 8px; font-size: 12px; font-weight: 700; }
+        .history-model-tag { font-size: 11px; color: var(--text-secondary); }
+
+        /* Footer */
+        footer {
+            text-align: center; padding: 32px;
+            color: var(--text-secondary); font-size: 13px;
+            margin-top: 60px;
+            border-top: 1px solid var(--border);
+        }
+
+        /* Animations */
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="logo">
+        <div class="logo-icon">&#x1F6E1;</div>
+        <div>
+            <div class="logo-text">VeriFacts</div>
+            <div class="logo-sub">Multi-Model AI Fake News Detector</div>
+        </div>
+    </div>
+    <div class="header-badges">
+        <span class="tech-pill">Pandas • NLTK</span>
+        <span class="tech-pill">4 ML Models</span>
+        <div class="header-badge">&#x26A1; FastAPI v2.0</div>
+    </div>
+</header>
+
+<main>
+    <div class="hero-tag">&#x1F916; NLP & Multi-Model Machine Learning</div>
+    <h1>Is this news Real or Fake?</h1>
+    <p class="hero-desc">
+        Paste any news headline or article. Choose from 4 advanced machine learning algorithms
+        (<strong>Logistic Regression, SVM, Random Forest, XGBoost</strong>) with NLTK preprocessing to detect authenticity.
+    </p>
+
+    <div class="input-card">
+        <!-- Model Selection Dropdown -->
+        <div class="model-select-wrapper">
+            <span class="model-select-label">&#x2699;&#xFE0F; Selected ML Model:</span>
+            <select id="modelSelect" class="model-dropdown">
+                <option value="best" selected>🏆 Best Model (Auto - Highest Accuracy)</option>
+                <option value="lr">Logistic Regression (LR)</option>
+                <option value="svm">Support Vector Machine (SVM)</option>
+                <option value="rf">Random Forest (RF)</option>
+                <option value="xgb">XGBoost (XGB)</option>
+            </select>
+        </div>
+
+        <label class="input-label" for="newsInput">News Article / Headline</label>
+        <textarea
+            id="newsInput"
+            placeholder="e.g. NASA's latest rover sent back stunning high-resolution images of Mars..."
+        ></textarea>
+        <div class="input-footer">
+            <span id="charCount">0 / 50,000 characters</span>
+            <button class="btn-detect" id="detectBtn" onclick="detectNews()">
+                <span id="btnText">Detect Now</span>
+                <div class="loader" id="loader"></div>
+            </button>
+        </div>
+    </div>
+
+    <!-- Error Card -->
+    <div id="errorCard">
+        <strong>Connection Error</strong>
+        <span id="errorMsg">Could not connect to the API. Please make sure the server is running.</span>
+    </div>
+
+    <!-- Result Card -->
+    <div id="resultCard">
+        <div class="result-header">
+            <span class="result-title">Analysis Result</span>
+            <span class="result-model-badge" id="resultModelBadge">Logistic Regression</span>
+        </div>
+        <div class="result-verdict" id="resultVerdict"></div>
+        <div class="confidence-section">
+            <div class="conf-row">
+                <span>Confidence Score</span>
+                <span class="conf-value" id="confValue">—</span>
+            </div>
+            <div class="bar-track">
+                <div class="bar-fill" id="barFill"></div>
+            </div>
+        </div>
+        <div class="result-desc" id="resultDesc"></div>
+    </div>
+
+    <!-- Multi-Model Performance Benchmark Table -->
+    <div class="comparison-card" id="comparisonCard">
+        <div class="comparison-header">
+            <div class="comparison-title">&#x1F4CA; Model Performance & Benchmark Comparison</div>
+            <span class="comparison-badge" id="benchmarkBadge">4 Models Evaluated</span>
+        </div>
+        <div class="table-responsive">
+            <table class="metrics-table">
+                <thead>
+                    <tr>
+                        <th>Algorithm</th>
+                        <th>Accuracy</th>
+                        <th>Precision</th>
+                        <th>Recall</th>
+                        <th>F1-Score</th>
+                    </tr>
+                </thead>
+                <tbody id="metricsTableBody">
+                    <tr>
+                        <td><strong>Logistic Regression (LR)</strong></td>
+                        <td><span class="metric-badge">100.0%</span></td>
+                        <td>100.0%</td>
+                        <td>100.0%</td>
+                        <td>100.0%</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Support Vector Machine (SVM)</strong></td>
+                        <td><span class="metric-badge">100.0%</span></td>
+                        <td>100.0%</td>
+                        <td>100.0%</td>
+                        <td>100.0%</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Random Forest (RF)</strong></td>
+                        <td><span class="metric-badge">100.0%</span></td>
+                        <td>100.0%</td>
+                        <td>100.0%</td>
+                        <td>100.0%</td>
+                    </tr>
+                    <tr>
+                        <td><strong>XGBoost (XGB)</strong></td>
+                        <td><span class="metric-badge">100.0%</span></td>
+                        <td>100.0%</td>
+                        <td>100.0%</td>
+                        <td>100.0%</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- History -->
+    <div id="historySection">
+        <div class="section-title">Recent Checks</div>
+        <div id="historyList"></div>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-row">
+        <div class="stat-card">
+            <div class="stat-num" id="totalChecks">0</div>
+            <div class="stat-label">Total Checks</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-num" id="fakeFound">0</div>
+            <div class="stat-label">Fake Detected</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-num" id="realFound">0</div>
+            <div class="stat-label">Real Verified</div>
+        </div>
+    </div>
+</main>
+
+<footer>
+    &copy; 2026 VeriFacts &mdash; Built with FastAPI + Pandas + NLTK + Scikit-learn + XGBoost &nbsp;|&nbsp; API: <code>http://127.0.0.1:8000</code>
+</footer>
+
+<script>
+    const API_URL = "http://127.0.0.1:8000/predict";
+    const MODELS_URL = "http://127.0.0.1:8000/models";
+    let stats = { total: 0, fake: 0, real: 0 };
+    let history = [];
+
+    // Character counter
+    document.getElementById("newsInput").addEventListener("input", function() {
+        const len = this.value.length;
+        document.getElementById("charCount").textContent = `${len.toLocaleString()} / 50,000 characters`;
+    });
+
+    // Fetch benchmark metrics on page load
+    async function fetchModelMetrics() {
+        try {
+            const res = await fetch(MODELS_URL);
+            if (res.ok) {
+                const data = await res.json();
+                renderMetricsTable(data);
+            }
+        } catch (e) {
+            // Keep default static values if API offline
+        }
+    }
+
+    function renderMetricsTable(data) {
+        if (!data || !data.models) return;
+        const tbody = document.getElementById("metricsTableBody");
+        const rows = Object.entries(data.models).map(([key, item]) => `
+            <tr>
+                <td><strong>${item.name}</strong> ${data.best_model === key ? '<span style="color:#fbbf24; font-size:12px;">★ Best</span>' : ''}</td>
+                <td><span class="metric-badge">${item.accuracy}%</span></td>
+                <td>${item.precision}%</td>
+                <td>${item.recall}%</td>
+                <td>${item.f1_score}%</td>
+            </tr>
+        `).join("");
+        tbody.innerHTML = rows;
+        document.getElementById("benchmarkBadge").textContent = `Best: ${data.best_model_name}`;
+    }
+
+    fetchModelMetrics();
+
+    async function detectNews() {
+        const input = document.getElementById("newsInput").value.trim();
+        const selectedModel = document.getElementById("modelSelect").value;
+
+        if (!input) {
+            document.getElementById("newsInput").focus();
+            return;
+        }
+
+        // Show loader
+        setLoading(true);
+        document.getElementById("resultCard").style.display = "none";
+        document.getElementById("errorCard").style.display = "none";
+
+        try {
+            const response = await fetch(API_URL, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ news: input, model: selectedModel })
+            });
+
+            if (!response.ok) {
+                const err = await response.json();
+                throw new Error(err.detail?.detail || err.detail || "Server error: " + response.status);
+            }
+
+            const data = await response.json();
+            showResult(data, input);
+
+        } catch (err) {
+            showError(err.message.includes("fetch") 
+                ? "Server is not running! Please start the FastAPI server via start.bat." 
+                : err.message);
+        } finally {
+            setLoading(false);
+        }
+    }
+
+    function showResult(data, inputText) {
+        const isFake = data.prediction === "FAKE";
+        const confidence = data.confidence ? Math.round(data.confidence * 100) : null;
+
+        // Model Badge
+        document.getElementById("resultModelBadge").textContent = data.model_used ? `Model: ${data.model_used}` : "Model: Best";
+
+        // Update verdict
+        const verdictEl = document.getElementById("resultVerdict");
+        verdictEl.innerHTML = `
+            <span class="verdict-icon">${isFake ? "&#x26A0;" : "&#x2705;"}</span>
+            <span style="color: ${isFake ? "#ef4444" : "#10b981"}">${data.prediction}</span>
+        `;
+
+        // Update bar
+        const barFill = document.getElementById("barFill");
+        barFill.style.background = isFake
+            ? "linear-gradient(90deg, #ef4444, #dc2626)"
+            : "linear-gradient(90deg, #10b981, #059669)";
+
+        if (confidence !== null) {
+            document.getElementById("confValue").textContent = confidence + "%";
+            setTimeout(() => { barFill.style.width = confidence + "%"; }, 100);
+        } else {
+            document.getElementById("confValue").textContent = "N/A";
+            setTimeout(() => { barFill.style.width = "50%"; }, 100);
+        }
+
+        // Description
+        const descEl = document.getElementById("resultDesc");
+        descEl.style.borderLeftColor = isFake ? "#ef4444" : "#10b981";
+        descEl.textContent = isFake
+            ? `This article shows HIGH probability of containing misleading or false information. Verified by ${data.model_used || 'ML classifier'}.`
+            : `This article appears to be credible and factual based on our analysis. Verified by ${data.model_used || 'ML classifier'}.`;
+
+        document.getElementById("resultCard").style.display = "block";
+
+        // Update stats
+        stats.total++; stats[isFake ? "fake" : "real"]++;
+        document.getElementById("totalChecks").textContent = stats.total;
+        document.getElementById("fakeFound").textContent = stats.fake;
+        document.getElementById("realFound").textContent = stats.real;
+
+        // History
+        addToHistory(inputText, data.prediction, confidence, data.model_used);
+    }
+
+    function addToHistory(text, prediction, confidence, modelUsed) {
+        history.unshift({ text, prediction, confidence, modelUsed });
+        if (history.length > 5) history.pop();
+
+        const isFake = prediction === "FAKE";
+        const listEl = document.getElementById("historyList");
+        listEl.innerHTML = history.map((h, i) => `
+            <div class="history-item" onclick="reuseHistory(${i})">
+                <span class="history-text">${h.text}</span>
+                <div class="history-badges-grp">
+                    <span class="history-model-tag">${h.modelUsed || ''}</span>
+                    <span class="history-badge" style="background:${h.prediction === "FAKE" ? "rgba(239,68,68,0.15)" : "rgba(16,185,129,0.15)"}; color:${h.prediction === "FAKE" ? "#f87171" : "#34d399"}">
+                        ${h.prediction} ${h.confidence ? Math.round(h.confidence * 100) + "%" : ""}
+                    </span>
+                </div>
+            </div>
+        `).join("");
+
+        document.getElementById("historySection").style.display = "block";
+    }
+
+    function reuseHistory(index) {
+        document.getElementById("newsInput").value = history[index].text;
+        detectNews();
+    }
+
+    function showError(msg) {
+        document.getElementById("errorMsg").textContent = msg;
+        document.getElementById("errorCard").style.display = "block";
+    }
+
+    function setLoading(loading) {
+        const btn = document.getElementById("detectBtn");
+        btn.disabled = loading;
+        document.getElementById("btnText").textContent = loading ? "Analyzing..." : "Detect Now";
+        document.getElementById("loader").style.display = loading ? "block" : "none";
+    }
+
+    // Allow Ctrl+Enter to submit
+    document.getElementById("newsInput").addEventListener("keydown", function(e) {
+        if (e.key === "Enter" && e.ctrlKey) detectNews();
+    });
+</script>
+</body>
+</html>
